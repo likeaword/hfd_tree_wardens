@@ -7,7 +7,9 @@
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <link rel="stylesheet" href="css/leaflet.css">
-        <link rel="stylesheet" href="css/qgis2web.css"><link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
         <style>
         html, body, #map {
             width: 100%;
@@ -23,6 +25,7 @@
         </div>
         <script src="js/qgis2web_expressions.js"></script>
         <script src="js/leaflet.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
         <script src="js/leaflet.rotatedMarker.js"></script>
         <script src="js/leaflet.pattern.js"></script>
         <script src="js/leaflet-hash.js"></script>
@@ -30,14 +33,45 @@
         <script src="js/rbush.min.js"></script>
         <script src="js/labelgun.min.js"></script>
         <script src="js/labels.js"></script>
-        <script src="data/HerefordCityNatureAreasTrialGIpolygonsshp_1.js"></script>
+        <script src="data/greenspace_1.js"></script>
         <script>
         var map = L.map('map', {
-            zoomControl:true, maxZoom:28, minZoom:1
-        }).fitBounds([[52.03043113611242,-2.801901161421204],[52.079290762231246,-2.649839330519424]]);
+            zoomControl:false, maxZoom:28, minZoom:1
+        }).fitBounds([[52.0358028667728,-2.7863900504354744],[52.084632508664505,-2.636225175300772]]);
         var hash = new L.Hash(map);
         map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
         var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        // remove popup's row if "visible-with-data"
+        function removeEmptyRowsFromPopupContent(content, feature) {
+         var tempDiv = document.createElement('div');
+         tempDiv.innerHTML = content;
+         var rows = tempDiv.querySelectorAll('tr');
+         for (var i = 0; i < rows.length; i++) {
+             var td = rows[i].querySelector('td.visible-with-data');
+             var key = td ? td.id : '';
+             if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                 rows[i].parentNode.removeChild(rows[i]);
+             }
+         }
+         return tempDiv.innerHTML;
+        }
+        // add class to format popup if it contains media
+		function addClassToPopupIfMedia(content, popup) {
+			var tempDiv = document.createElement('div');
+			tempDiv.innerHTML = content;
+			if (tempDiv.querySelector('td img')) {
+				popup._contentNode.classList.add('media');
+					// Delay to force the redraw
+					setTimeout(function() {
+						popup.update();
+					}, 10);
+			} else {
+				popup._contentNode.classList.remove('media');
+			}
+		}
+        var zoomControl = L.control.zoom({
+            position: 'topleft'
+        }).addTo(map);
         var bounds_group = new L.featureGroup([]);
         function setBounds() {
         }
@@ -54,12 +88,46 @@
         });
         layer_OpenStreetMap_0;
         map.addLayer(layer_OpenStreetMap_0);
-        function pop_HerefordCityNatureAreasTrialGIpolygonsshp_1(feature, layer) {
+        function pop_greenspace_1(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td class="visible-with-data" id="Location"colspan="2"><strong>Location</strong><br />' + (feature.properties['Location'] !== null ? autolinker.link(feature.properties['Location'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Issue</th>\
+                        <td class="visible-with-data" id="Issue">' + (feature.properties['Issue'] !== null ? autolinker.link(feature.properties['Issue'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Solution?</th>\
+                        <td class="visible-with-data" id="Solution?">' + (feature.properties['Solution?'] !== null ? autolinker.link(feature.properties['Solution?'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Ward</th>\
+                        <td class="visible-with-data" id="Ward">' + (feature.properties['Ward'] !== null ? autolinker.link(feature.properties['Ward'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">IMD rank</th>\
+                        <td class="visible-with-data" id="IMD rank">' + (feature.properties['IMD rank'] !== null ? autolinker.link(feature.properties['IMD rank'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">IMD decile</th>\
+                        <td class="visible-with-data" id="IMD decile">' + (feature.properties['IMD decile'] !== null ? autolinker.link(feature.properties['IMD decile'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">LSOA</th>\
+                        <td class="visible-with-data" id="LSOA">' + (feature.properties['LSOA'] !== null ? autolinker.link(feature.properties['LSOA'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
         }
 
-        function style_HerefordCityNatureAreasTrialGIpolygonsshp_1_0() {
+        function style_greenspace_1_0() {
             return {
-                pane: 'pane_HerefordCityNatureAreasTrialGIpolygonsshp_1',
+                pane: 'pane_greenspace_1',
                 opacity: 1,
                 color: 'rgba(35,35,35,1.0)',
                 dashArray: '',
@@ -68,26 +136,88 @@
                 weight: 1.0, 
                 fill: true,
                 fillOpacity: 1,
-                fillColor: 'rgba(25,141,107,0.25098039215686274)',
+                fillColor: 'rgba(190,207,80,1.0)',
                 interactive: true,
             }
         }
-        map.createPane('pane_HerefordCityNatureAreasTrialGIpolygonsshp_1');
-        map.getPane('pane_HerefordCityNatureAreasTrialGIpolygonsshp_1').style.zIndex = 401;
-        map.getPane('pane_HerefordCityNatureAreasTrialGIpolygonsshp_1').style['mix-blend-mode'] = 'normal';
-        var layer_HerefordCityNatureAreasTrialGIpolygonsshp_1 = new L.geoJson(json_HerefordCityNatureAreasTrialGIpolygonsshp_1, {
+        map.createPane('pane_greenspace_1');
+        map.getPane('pane_greenspace_1').style.zIndex = 401;
+        map.getPane('pane_greenspace_1').style['mix-blend-mode'] = 'normal';
+        var layer_greenspace_1 = new L.geoJson(json_greenspace_1, {
             attribution: '',
             interactive: true,
-            dataVar: 'json_HerefordCityNatureAreasTrialGIpolygonsshp_1',
-            layerName: 'layer_HerefordCityNatureAreasTrialGIpolygonsshp_1',
-            pane: 'pane_HerefordCityNatureAreasTrialGIpolygonsshp_1',
-            onEachFeature: pop_HerefordCityNatureAreasTrialGIpolygonsshp_1,
-            style: style_HerefordCityNatureAreasTrialGIpolygonsshp_1_0,
+            dataVar: 'json_greenspace_1',
+            layerName: 'layer_greenspace_1',
+            pane: 'pane_greenspace_1',
+            onEachFeature: pop_greenspace_1,
+            style: style_greenspace_1_0,
         });
-        bounds_group.addLayer(layer_HerefordCityNatureAreasTrialGIpolygonsshp_1);
-        map.addLayer(layer_HerefordCityNatureAreasTrialGIpolygonsshp_1);
+        bounds_group.addLayer(layer_greenspace_1);
+        map.addLayer(layer_greenspace_1);
         var baseMaps = {};
-        L.control.layers(baseMaps,{'<img src="legend/HerefordCityNatureAreasTrialGIpolygonsshp_1.png" /> Hereford City Nature Areas — Trial GI polygons.shp': layer_HerefordCityNatureAreasTrialGIpolygonsshp_1,"OpenStreetMap": layer_OpenStreetMap_0,},{collapsed:false}).addTo(map);
+        var overlaysTree = [
+            {label: '<img src="legend/greenspace_1.png" /> greenspace', layer: layer_greenspace_1},
+            {label: "OpenStreetMap", layer: layer_OpenStreetMap_0},]
+        var lay = L.control.layers.tree(null, overlaysTree,{
+            //namedToggle: true,
+            //selectorBack: false,
+            //closedSymbol: '&#8862; &#x1f5c0;',
+            //openedSymbol: '&#8863; &#x1f5c1;',
+            //collapseAll: 'Collapse all',
+            //expandAll: 'Expand all',
+            collapsed: false, 
+        });
+        lay.addTo(map);
+		document.addEventListener("DOMContentLoaded", function() {
+            // set new Layers List height which considers toggle icon
+            function newLayersListHeight() {
+                var layerScrollbarElement = document.querySelector('.leaflet-control-layers-scrollbar');
+                if (layerScrollbarElement) {
+                    var layersListElement = document.querySelector('.leaflet-control-layers-list');
+                    var originalHeight = layersListElement.style.height 
+                        || window.getComputedStyle(layersListElement).height;
+                    var newHeight = parseFloat(originalHeight) - 50;
+                    layersListElement.style.height = newHeight + 'px';
+                }
+            }
+            var isLayersListExpanded = true;
+            var controlLayersElement = document.querySelector('.leaflet-control-layers');
+            var toggleLayerControl = document.querySelector('.leaflet-control-layers-toggle');
+            // toggle Collapsed/Expanded and apply new Layers List height
+            toggleLayerControl.addEventListener('click', function() {
+                if (isLayersListExpanded) {
+                    controlLayersElement.classList.remove('leaflet-control-layers-expanded');
+                } else {
+                    controlLayersElement.classList.add('leaflet-control-layers-expanded');
+                }
+                isLayersListExpanded = !isLayersListExpanded;
+                newLayersListHeight()
+            });	
+			// apply new Layers List height if toggle layerstree
+			if (controlLayersElement) {
+				controlLayersElement.addEventListener('click', function(event) {
+					var toggleLayerHeaderPointer = event.target.closest('.leaflet-layerstree-header-pointer span');
+					if (toggleLayerHeaderPointer) {
+						newLayersListHeight();
+					}
+				});
+			}
+            // Collapsed/Expanded at Start to apply new height
+            setTimeout(function() {
+                toggleLayerControl.click();
+            }, 10);
+            setTimeout(function() {
+                toggleLayerControl.click();
+            }, 10);
+            // Collapsed touch/small screen
+            var isSmallScreen = window.innerWidth < 650;
+            if (isSmallScreen) {
+                setTimeout(function() {
+                    controlLayersElement.classList.remove('leaflet-control-layers-expanded');
+                    isLayersListExpanded = !isLayersListExpanded;
+                }, 500);
+            }  
+        });       
         setBounds();
         </script>
     </body>
